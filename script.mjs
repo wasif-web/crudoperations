@@ -1,11 +1,10 @@
-const itemForm = document.getElementById("itemForm");
 const tableBody = document.getElementById("tableBody");
 
 const fetchProducts = () => {
   axios.get("https://modified-alloy-392605.oa.r.appspot.com/products")
     .then((res) => {
       const data = res.data.data;
-      tableBody.innerHTML = ""; 
+      tableBody.innerHTML = "";
       data.forEach((item) => {
         tableBody.innerHTML += `
           <tr>
@@ -13,54 +12,64 @@ const fetchProducts = () => {
             <td>${item.price}</td>
             <td>${item.quantity}</td>
             <td>${item.description}</td>
-            <td><button onclick="updateProduct(${item.id})">Update</button></td>
-            <td><button class="delete-button" data-product-id="${item.id}">Delete</button></td>
+            <td>
+              <button onclick="updateProduct(${item.id}, 'name')">Edit Name</button>
+              <button onclick="updateProduct(${item.id}, 'price')">Edit Price</button>
+              <button onclick="updateProduct(${item.id}, 'quantity')">Edit Quantity</button>
+              <button class="delete-button" data-product-id="${item.id}">Delete</button>
+            </td>
           </tr>
         `;
       });
     })
     .catch((err) => {
       console.log(err);
-      alert("Error fetching product data"); 
+      alert("Error fetching product data");
     });
 };
 
-const updateProduct = (id) => {
-  const name = prompt("Enter Name");
-  const price = prompt("Enter Price");
-  const quantity = prompt("Enter Quantity");
-  const description = prompt("Enter Description");
+const updateProduct = (id, field) => {
+  const newValue = prompt(`Enter new ${field}:`);
+
+  if (!newValue) {
+    alert("Field cannot be empty!");
+    return;
+  }
 
   axios.put(`https://modified-alloy-392605.oa.r.appspot.com/product/${id}`, {
-    name: name,
-    price: price,
-    quantity: quantity,
-    description: description,
+    [field]: newValue,
   })
     .then((res) => {
       console.log(res);
-      alert("Product Edited"); 
-      fetchProducts(); 
+      alert("Product Edited");
+      fetchProducts();
     })
     .catch((err) => {
       console.log(err);
-      alert("Error editing product"); 
+      alert("Error editing product");
     });
 };
 
 const deleteProduct = (id) => {
   axios.delete(`https://modified-alloy-392605.oa.r.appspot.com/product/${id}`)
     .then((res) => {
-      console.log(res);
-      alert("Product Deleted"); 
-      fetchProducts(); 
+      if (res.data && res.data.message === "Product Found") {
+        console.log(res);
+        alert("Product Deleted");
+        fetchProducts();
+      } else {
+        console.log(res);
+        alert("Product not found or already deleted");
+      }
     })
     .catch((err) => {
-      console.log(err);
-      alert("Error deleting product"); 
+      console.error(err);
+      alert("Error deleting product");
     });
 };
 
+
+const itemForm = document.getElementById("itemForm");
 itemForm.addEventListener("submit", (event) => {
   event.preventDefault();
   axios.post("https://modified-alloy-392605.oa.r.appspot.com/product", {
@@ -72,14 +81,13 @@ itemForm.addEventListener("submit", (event) => {
     .then((res) => {
       console.log(res);
       alert("Product Added");
-      fetchProducts(); 
+      fetchProducts();
     })
     .catch((err) => {
       console.log(err);
-      alert("Error adding product"); 
+      alert("Error adding product");
     });
 });
-
 
 const deleteButtons = document.querySelectorAll(".delete-button");
 deleteButtons.forEach((button) => {
@@ -88,6 +96,5 @@ deleteButtons.forEach((button) => {
     deleteProduct(productIdToDelete);
   });
 });
-
 
 fetchProducts();
